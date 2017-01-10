@@ -163,40 +163,6 @@ class QueryBuilder
         return $queryBuilder->raw($sql);
     }
 
-    public function from($tables)
-    {
-        if(is_array($tables) === false)
-            $tables = func_get_args();
-
-        $this->addQuerySegment('tables', $this->addTablePrefix($tables));
-
-        return $this;
-    }
-
-    public function table()
-    {
-        return call_user_func_array([ $this, 'from' ], func_get_args());
-    }
-
-    public function select($fields)
-    {
-        if(is_array($fields) === false)
-            $fields = func_get_args();
-
-        $fields = $this->addTablePrefix($fields);
-        $this->addQuerySegment('selects', $fields);
-
-        return $this;
-    }
-
-    public function selectDistinct($fields)
-    {
-        $this->select($fields);
-        $this->addQuerySegment('distinct', true);
-
-        return $this;
-    }
-
     public function all()
     {
         $eventResult = $this->dispatch('before-select');
@@ -243,6 +209,61 @@ class QueryBuilder
         $this->where($field, '=', $value);
 
         return $this->all();
+    }
+
+    public function from($tables)
+    {
+        if(is_array($tables) === false)
+            $tables = func_get_args();
+
+        $this->addQuerySegment('tables', $this->addTablePrefix($tables));
+
+        return $this;
+    }
+
+    public function table()
+    {
+        return call_user_func_array([ $this, 'from' ], func_get_args());
+    }
+
+    public function removeTables()
+    {
+        $this->removeQuerySegment('tables');
+
+        return $this;
+    }
+
+    public function select($fields)
+    {
+        if(is_array($fields) === false)
+            $fields = func_get_args();
+
+        $fields = $this->addTablePrefix($fields);
+        $this->addQuerySegment('selects', $fields);
+
+        return $this;
+    }
+
+    public function removeSelects()
+    {
+        $this->removeQuerySegment('selects');
+
+        return $this;
+    }
+
+    public function selectDistinct($fields)
+    {
+        $this->select($fields);
+        $this->addQuerySegment('distinct', true);
+
+        return $this;
+    }
+
+    public function removeSelectDistinct()
+    {
+        $this->removeQuerySegment('distinct');
+
+        return $this;
     }
 
     public function count($column = '*')
@@ -348,6 +369,13 @@ class QueryBuilder
         return $this;
     }
 
+    public function removeGroupBy()
+    {
+        $this->removeQuerySegment('groupBy');
+
+        return $this;
+    }
+
     public function orderBy($fields, $defaultDirection = 'ASC')
     {
         if(is_array($fields) === false)
@@ -378,6 +406,13 @@ class QueryBuilder
         return $this;
     }
 
+    public function removeOrderBys()
+    {
+        $this->removeQuerySegment('orderBy');
+
+        return $this;
+    }
+
     public function limit($limit)
     {
         $this->querySegments['limit'] = $limit;
@@ -385,9 +420,23 @@ class QueryBuilder
         return $this;
     }
 
+    public function removeLimit()
+    {
+        $this->removeQuerySegment('limit');
+
+        return $this;
+    }
+
     public function offset($offset)
     {
         $this->querySegments['offset'] = $offset;
+
+        return $this;
+    }
+
+    public function removeOffset()
+    {
+        $this->removeQuerySegment('offset');
 
         return $this;
     }
@@ -400,6 +449,13 @@ class QueryBuilder
             'value'    => $value,
             'joiner'   => $joiner
         ];
+
+        return $this;
+    }
+
+    public function removeHavings()
+    {
+        $this->removeQuerySegment('havings');
 
         return $this;
     }
@@ -479,6 +535,13 @@ class QueryBuilder
         return $this->handleWhereNull($key, 'NOT', 'or');
     }
 
+    public function removeWheres()
+    {
+        $this->removeQuerySegment('wheres');
+
+        return $this;
+    }
+
     public function join($table, $key, $operator = null, $value = null, $type = 'inner')
     {
         if(! $key instanceof \Closure)
@@ -515,6 +578,13 @@ class QueryBuilder
     public function innerJoin($table, $key, $operator = null, $value = null)
     {
         return $this->join($table, $key, $operator, $value, 'inner');
+    }
+
+    public function removeJoins()
+    {
+        $this->removeQuerySegment('joins');
+
+        return $this;
     }
 
     public function transaction(\Closure $callback)
@@ -590,6 +660,21 @@ class QueryBuilder
             $this->querySegments[$key] = $value;
         else
             $this->querySegments[$key] = array_merge($this->querySegments[$key], $value);
+    }
+
+    public function replaceQuerySegment($key, $value)
+    {
+        $this->removeQuerySegment($key);
+        $this->addQuerySegment($key, $value);
+
+        return $this;
+    }
+
+    public function removeQuerySegment($key)
+    {
+        unset($this->querySegments[$key]);
+
+        return $this;
     }
 
     protected function doInsert($data, $type)
