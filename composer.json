@@ -1,0 +1,25 @@
+{
+    "name": "requtize/query-builder",
+    "description": "Fast, simple and dependency-free query builder for PHP.",
+    "homepage": "https://github.com/requtize/query-builder",
+    "keywords": [ "query builder", "database", "sql" ],
+    "license": "MIT",
+    "version": "1.0.0",
+    "authors": [
+        {
+            "name": "Adam Banaszkiewicz",
+            "homepage": "http://adambanaszkiewicz.pl",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "~5.5 || ^7.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^4.8",
+        "mockery/mockery": "0.9.4"
+    },
+    "autoload": {
+        "psr-4": {"Requtize\\QueryBuilder\\": "src/QueryBuilder/"}
+    }
+}
