@@ -17,6 +17,6 @@ class Sqlite extends Schema
 
     public function quoteColumnName($name)
     {
-        return $name == '*' ? $name : "`{$name}`";
+        return $name == '*' ? $name : '`'.$name.'`';
     }
 }

@@ -274,7 +274,7 @@ class QueryBuilder
         unset($this->querySegments['limit']);
         unset($this->querySegments['offset']);
 
-        $count = $this->aggregate("COUNT({$column})");
+        $count = $this->aggregate('COUNT('.$column.')');
         $this->querySegments = $segments;
 
         return $count;
@@ -282,22 +282,22 @@ class QueryBuilder
 
     public function max($column)
     {
-        return $this->aggregate("MAX({$column})");
+        return $this->aggregate('MAX('.$column.')');
     }
 
     public function min($column)
     {
-        return $this->aggregate("MIN({$column})");
+        return $this->aggregate('MIN('.$column.')');
     }
 
     public function sum($column)
     {
-        return $this->aggregate("SUM({$column})");
+        return $this->aggregate('SUM('.$column.')');
     }
 
     public function avg($column)
     {
-        return $this->aggregate("AVG({$column})");
+        return $this->aggregate('AVG('.$column.')');
     }
 
     public function insert($data)
@@ -735,6 +735,6 @@ class QueryBuilder
     {
         $key = $this->compiler->quoteColumnName($this->addTablePrefix($key));
 
-        return $this->{$operator.'Where'}($this->raw("{$key} IS {$prefix} NULL"));
+        return $this->{$operator.'Where'}($this->raw($key.' IS '.$prefix.' NULL'));
     }
 }

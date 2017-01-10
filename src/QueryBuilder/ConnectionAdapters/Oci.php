@@ -16,13 +16,13 @@ class Oci extends BaseAdapter
 
     protected function doConnect()
     {
-        $url = "oci:dbname={$this->getConfigValue('database')}";
+        $url = '"oci:dbname='.$this->getConfigValue('database');
         
         if($this->getConfigValue('host'))
-            $url .= ";host={$this->getConfigValue('host')}";
+            $url .= ';host='.$this->getConfigValue('host');
         
         if($this->getConfigValue('port'))
-            $url .= ";port={$this->getConfigValue('port')}";
+            $url .= '";port='.$this->getConfigValue('port');
 
         return new PDO($url, $this->getConfigValue('username'), $this->getConfigValue('password'), $this->getConfigValue('options'));
     }

@@ -16,18 +16,18 @@ class Pgsql extends BaseAdapter
 
     protected function doConnect($config)
     {
-        $url = "pgsql:host={$this->getConfigValue('host')};dbname={$this->getConfigValue('database')}";
+        $url = 'pgsql:host='.$this->getConfigValue('host').';dbname='.$this->getConfigValue('database');
 
         if($this->getConfigValue('port'))
-            $url .= ";port={$this->getConfigValue('port')}";
+            $url .= ';port='.$this->getConfigValue('port');
 
         $connection = new PDO($url, $this->getConfigValue('username'), $this->getConfigValue('password'), $this->getConfigValue('options'));
 
         if($this->getConfigValue('charset'))
-            $connection->prepare("SET NAMES '{$this->getConfigValue('charset')}'")->execute();
+            $connection->prepare("SET NAMES '".$this->getConfigValue('charset')."'")->execute();
 
         if($this->getConfigValue('schema'))
-            $connection->prepare("SET search_path TO '{$this->getConfigValue('schema')}'")->execute();
+            $connection->prepare("SET search_path TO '".$this->getConfigValue('schema')."'")->execute();
 
         return $connection;
     }

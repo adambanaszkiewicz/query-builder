@@ -57,7 +57,7 @@ class Query
         foreach($params as $key => $value)
         {
             if(is_string($key))
-                $keys[] = '/:' . $key . '/';
+                $keys[] = '/:'.$key.'/';
             else
                 $keys[] = '/[?]/';
 
