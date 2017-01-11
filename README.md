@@ -25,3 +25,4 @@ $result = $qb->from('table')->where('cost', '>', 120)->all();
 ```php
 $qb->from('table')->tableAlias('table', 'alias')
 ```
+- Column alias without using a RAW.
