@@ -13,10 +13,11 @@ $pdo = new PDO('dns...');
 $conn = new Connection(new PdoBridge($pdo));
 
 // Pass this connection to Factory
-$qb   = new QueryBuilderFactory($conn);
+$qbf = new QueryBuilderFactory($conn);
 
-// Now we can use the factory as QueryBuilder.
-$result = $qb->from('table')->where('cost', '>', 120)->all();
+// Now we can use the factory as QueryBuilder - it creates QueryBuilder
+// object every time we use some of method from QueryBuilder and returns it.
+$result = $qbf->from('table')->where('cost', '>', 120)->all();
 ```
 
 # @todo
@@ -33,4 +34,10 @@ $scopes = new ScopesContainer;
 $scopes->register('scrope-name', function($qb) {
     $qb->where('add_date', '<', 'NOW()');
 });
+
+$qbf->setScopes($scopes);
+
+// ...
+
+$qbf->from('table')->scope('scope-name')->all();
 ```
