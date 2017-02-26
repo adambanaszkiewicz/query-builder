@@ -26,3 +26,11 @@ $result = $qb->from('table')->where('cost', '>', 120)->all();
 $qb->from('table')->tableAlias('table', 'alias')
 ```
 - Column alias without using a RAW.
+
+- Scopes - reusable predefined groups of statements.
+```php
+$scopes = new ScopesContainer;
+$scopes->register('scrope-name', function($qb) {
+    $qb->where('add_date', '<', 'NOW()');
+});
+```
