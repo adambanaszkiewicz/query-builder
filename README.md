@@ -31,13 +31,16 @@ $qb->from('table')->tableAlias('table', 'alias')
 - Scopes - reusable predefined groups of statements.
 ```php
 $scopes = new ScopesContainer;
-$scopes->register('scrope-name', function($qb) {
-    $qb->where('add_date', '<', 'NOW()');
+$scopes->register('scrope-name', function($qb, $arg1, $arg2) {
+    if($arg1)
+        $qb->where('add_date', '<', 'NOW()');
+    if($arg2)
+        $qb->where('add_date', '>=', 'NOW()');
 });
 
 $qbf->setScopes($scopes);
 
 // ...
 
-$qbf->from('table')->scope('scope-name')->all();
+$qbf->from('table')->scopeName('arg1', 'arg2')->all();
 ```
