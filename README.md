@@ -44,3 +44,31 @@ $qbf->setScopes($scopes);
 
 $qbf->from('table')->scopeName('arg1', 'arg2')->all();
 ```
+
+- Wheres groups.
+```php
+$qbf->from('table')
+    ->where('column', 1)
+    ->orWhere(function ($qb) {
+        $qb
+            ->where('col2', 2)
+            ->where('col3', 3);
+    })
+    ->orWhere(function ($qb) {
+        $qb
+            ->where('col4', 4)
+            ->where('col5', 5);
+    });
+```
+Result:
+```sql
+SELECT *
+FROM table
+WHERE column = 1
+OR (
+    col2 = 2 AND col3 = 3
+)
+OR (
+    col4 = 4 AND col5 = 5
+)
+```
