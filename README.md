@@ -38,6 +38,15 @@ $result = $qbf->from('table')->where('cost', '>', 120)->all();
 composer require requtize/query-builder:dev-master
 ```
 
+## Query Builder Methods
+
+- table($tableName) - Set table to operate on.
+- where($column, $condition) ->
+- where($column, $operator, $condition) - Defines where query section. If used multiple times, next ones will be joined as "AND".
+- all() - Returns all founded records.
+- first() - Returns only one, first record from result set.
+- And so on...
+
 # @todo
 
 - Table alias without using RAW, like:
