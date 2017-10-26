@@ -20,6 +20,24 @@ $qbf = new QueryBuilderFactory($conn);
 $result = $qbf->from('table')->where('cost', '>', 120)->all();
 ```
 
+## Installation
+
+### Via composer.json
+
+```json
+{
+    "require": {
+        "requtize/query-builder": "dev-master"
+    }
+}
+```
+
+### Via Composer CLI
+
+```cli
+composer require requtize/query-builder:dev-master
+```
+
 # @todo
 
 - Table alias without using RAW, like:
@@ -31,7 +49,7 @@ $qb->from('table')->tableAlias('table', 'alias')
 - Scopes - reusable predefined groups of statements.
 ```php
 $scopes = new ScopesContainer;
-$scopes->register('scrope-name', function($qb, $arg1, $arg2) {
+$scopes->register('scope-name', function($qb, $arg1, $arg2) {
     if($arg1)
         $qb->where('add_date', '<', 'NOW()');
     if($arg2)
