@@ -29,6 +29,18 @@ class Compiler
         $this->tablePrefix     = $connection->getParameters()->get('prefix', null);
     }
 
+    public function setTablePrefix($prefix)
+    {
+        $this->tablePrefix = $prefix;
+
+        return $this;
+    }
+
+    public function getTablePrefix()
+    {
+        return $this->tablePrefix;
+    }
+
     public function compile($type, $querySegments, array $data = [])
     {
         $allowedTypes = [ 'select', 'insert', 'insertignore', 'replace', 'delete', 'update', 'criteriaonly' ];
@@ -287,42 +299,15 @@ class Compiler
         return is_int($value) ? $value : $this->connection->getPdo()->quote($value);
     }
 
-    public function addTablePrefix($values, $isTableWithFieldName = true)
+    public function addTablePrefix($value)
     {
         if(is_null($this->tablePrefix))
-            return $values;
+            return $value;
 
-        $wasSingleValue = false;
+        if(is_string($value) === false)
+            return $value;
 
-        if(is_array($values) === false)
-        {
-            $values = [ $values ];
-            $wasSingleValue = true;
-        }
-
-        $result = [];
-
-        foreach($values as $key => $value)
-        {
-            if($value instanceof Raw || $value instanceof \Closure)
-            {
-                $result[$key] = $value;
-
-                continue;
-            }
-
-            $target = & $value;
-
-            if(is_int($key) === false)
-                $target = & $key;
-
-            if(! $isTableWithFieldName || ($isTableWithFieldName && strpos($target, '.') !== false))
-                $target = $this->tablePrefix.$target;
-
-            $result[$key] = $value;
-        }
-
-        return $wasSingleValue ? $result[0] : $result;
+        return $this->tablePrefix.$value;
     }
 
     protected function buildCriteriaOfType($querySegments, $key, $type, $bindValues = true)

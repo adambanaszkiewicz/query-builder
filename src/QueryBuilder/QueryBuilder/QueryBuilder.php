@@ -226,7 +226,7 @@ class QueryBuilder
         if(is_array($tables) === false)
             $tables = func_get_args();
 
-        $this->addQuerySegment('tables', $this->addTablePrefix($tables));
+        $this->addQuerySegment('tables', $this->addTablePrefix($tables, true));
 
         return $this;
     }
@@ -583,7 +583,7 @@ class QueryBuilder
 
         $this->querySegments['joins'][] = [
             'type'        => $type,
-            'table'       => $this->addTablePrefix($table),
+            'table'       => $this->addTablePrefix($table, true),
             'joinBuilder' => $joinBuilder
         ];
 
@@ -666,9 +666,48 @@ class QueryBuilder
         return $pdoStatement;
     }
 
-    public function addTablePrefix($values, $isTableWithFieldName = true)
+    public function addTablePrefix($values, $forceAddToAll = false)
     {
-        return $this->compiler->addTablePrefix($values, $isTableWithFieldName);
+        $wasSingleValue = false;
+
+        if(is_array($values) === false)
+        {
+            $values = [ $values ];
+            $wasSingleValue = true;
+        }
+
+        $result = [];
+
+        foreach($values as $key => $value)
+        {
+            if(is_string($value) === false)
+            {
+                $result[$key] = $value;
+
+                continue;
+            }
+
+            $target = & $value;
+
+            if(is_int($key) === false)
+                $target = & $key;
+
+            if(strpos($target, '.') === false)
+            {
+                if($target !== '*' && $forceAddToAll)
+                {
+                    $target = $this->compiler->addTablePrefix($target);
+                }
+            }
+            else
+            {
+                $target = $this->compiler->addTablePrefix($target);
+            }
+
+            $result[$key] = $value;
+        }
+
+        return $wasSingleValue ? $result[0] : $result;
     }
 
     public function quote($value)
