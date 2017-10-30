@@ -44,6 +44,11 @@ class QueryBuilder
         $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     }
 
+    public function __clone()
+    {
+        $this->pdoStatement = null;
+    }
+
     public function setCompiler(Compiler $compiler)
     {
         $this->compiler = $compiler;
@@ -132,6 +137,11 @@ class QueryBuilder
             $connection = $this->connection;
 
         return new self($connection);
+    }
+
+    public function forkQuery()
+    {
+        return clone $this;
     }
 
     public function query($sql, $bindings = [])
@@ -300,27 +310,39 @@ class QueryBuilder
         return $this->aggregate('AVG('.$column.')');
     }
 
-    public function insert($data)
+    public function insert($data, $table = null)
     {
+        if($table)
+            $this->table($table);
+
         return $this->doInsert($data, 'insert');
     }
 
-    public function insertIgnore($data)
+    public function insertIgnore($data, $table = null)
     {
+        if($table)
+            $this->table($table);
+
         return $this->doInsert($data, 'insertignore');
     }
 
-    public function replace($data)
+    public function replace($data, $table = null)
     {
+        if($table)
+            $this->table($table);
+
         return $this->doInsert($data, 'replace');
     }
 
-    public function update($data)
+    public function update($data, $table = null)
     {
         $eventResult = $this->dispatch('before-update');
 
         if(is_null($eventResult) === false)
             return $eventResult;
+
+        if($table)
+            $this->table($table);
 
         $query = $this->getQuery('update', $data);
 
@@ -331,12 +353,12 @@ class QueryBuilder
         return $response;
     }
 
-    public function updateOrInsert($data)
+    public function updateOrInsert($data, $table = null)
     {
         if($this->first())
-            return $this->update($data);
+            return $this->update($data, $table);
         else
-            return $this->insert($data);
+            return $this->insert($data, $table);
     }
 
     public function onDuplicateKeyUpdate($data)
@@ -346,12 +368,15 @@ class QueryBuilder
         return $this;
     }
 
-    public function delete()
+    public function delete($table = null)
     {
         $eventResult = $this->dispatch('before-delete');
 
         if(is_null($eventResult) === false)
             return $eventResult;
+
+        if($table)
+            $this->table($table);
 
         $query = $this->getQuery('delete');
 
