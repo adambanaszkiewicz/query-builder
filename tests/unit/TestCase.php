@@ -10,14 +10,18 @@ use Requtize\QueryBuilder\ConnectionAdapters\PdoBridge;
 class TestCase extends \PHPUnit_Framework_TestCase
 {
     protected $pdo;
-    protected $conn;
     protected $qb;
+    protected $qbPrefixed;
 
     public function setUp()
     {
-        $this->createPDO();
-        $this->createConnection();
-        $this->createQueryBuilder();
+        $this->pdo = $this->createPDO();
+
+        $this->qb = $this->createQueryBuilder($this->createConnection($this->pdo));
+
+        $this->qbPrefixed = $this->createQueryBuilder($this->createConnection($this->pdo, [
+            'prefix' => 'prefix_'
+        ]));
     }
 
     public function tearDown()
@@ -27,16 +31,29 @@ class TestCase extends \PHPUnit_Framework_TestCase
 
     public function createPDO()
     {
-        $this->pdo = new PDO('sqlite::memory:');
+        return new PDO('sqlite::memory:');
     }
 
-    public function createConnection()
+    public function createConnection(PDO $pdo, array $options = [])
     {
-        $this->conn = new Connection(new PdoBridge($this->pdo));
+        return new Connection(new PdoBridge($pdo), $options);
     }
 
-    public function createQueryBuilder()
+    public function createQueryBuilder(Connection $conn)
     {
-        $this->qb = new QueryBuilderFactory($this->conn);
+        return new QueryBuilderFactory($conn);
+    }
+
+    public function assertSamePrefixedAndNot(\Closure $builder, $query)
+    {
+        $this->assertSame(
+            (string) $builder($this->qb)->getQuery(),
+            str_replace('__PREFIX__', '', $query)
+        );
+
+        $this->assertSame(
+            (string) $builder($this->qbPrefixed)->getQuery(),
+            str_replace('__PREFIX__', 'prefix_', $query)
+        );
     }
 }

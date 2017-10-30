@@ -14,122 +14,154 @@ class QueryBuilderTest extends TestCase
         /**
          * Select all as one argument.
          */
-        $qb = $this->qb->from('table')->select('*');
-
-        $this->assertSame(
-            (string) $qb->getQuery(),
-            'SELECT * FROM `table`'
+        $this->assertSamePrefixedAndNot(
+            function ($qb) {
+                return $qb->from('table')->select('*');
+            },
+            'SELECT * FROM `__PREFIX__table`'
         );
 
         /**
          * Select as one argument.
          */
-        $qb = $this->qb->from('table')->select('id');
-
-        $this->assertSame(
-            (string) $qb->getQuery(),
-            'SELECT `id` FROM `table`'
+        $this->assertSamePrefixedAndNot(
+            function ($qb) {
+                return $qb->from('table')->select('id');
+            },
+            'SELECT `id` FROM `__PREFIX__table`'
         );
 
         /**
          * Selects as many arguments.
          */
-        $qb = $this->qb->from('table')->select('id', 'name');
-
-        $this->assertSame(
-            (string) $qb->getQuery(),
-            'SELECT `id`, `name` FROM `table`'
+        $this->assertSamePrefixedAndNot(
+            function ($qb) {
+                return $qb->from('table')->select('id', 'table.name');
+            },
+            'SELECT `id`, `__PREFIX__table`.`name` FROM `__PREFIX__table`'
         );
 
         /**
          * Selects as array.
          */
-        $qb = $this->qb->from('table')->select([ 'first_name', 'last_name' ]);
-
-        $this->assertSame(
-            (string) $qb->getQuery(),
-            'SELECT `first_name`, `last_name` FROM `table`'
+        $this->assertSamePrefixedAndNot(
+            function ($qb) {
+                return $qb->from('table')->select([ 'first_name', 'table.last_name' ]);
+            },
+            'SELECT `first_name`, `__PREFIX__table`.`last_name` FROM `__PREFIX__table`'
         );
 
         /**
          * RAW select columns not quoted.
          */
-        $qb = $this->qb->from('table');
-        $qb->select($qb->raw('first_name, last_name'));
-
-        $this->assertSame(
-            (string) $qb->getQuery(),
-            'SELECT first_name, last_name FROM `table`'
+        $this->assertSamePrefixedAndNot(
+            function ($qb) {
+                return $qb->from('table')
+                    ->select($qb->raw('first_name, table.last_name'));
+            },
+            'SELECT first_name, table.last_name FROM `__PREFIX__table`'
         );
 
         /**
          * RAW select columns quoted.
          */
-        $qb = $this->qb->from('table');
-        $qb->select($qb->raw('`first_name`, `last_name`'));
-
-        $this->assertSame(
-            (string) $qb->getQuery(),
-            'SELECT `first_name`, `last_name` FROM `table`'
+        $this->assertSamePrefixedAndNot(
+            function ($qb) {
+                return $qb->from('table')
+                    ->select($qb->raw('`first_name`, table.`last_name`, `table`.`last_name`'));
+            },
+            'SELECT `first_name`, table.`last_name`, `table`.`last_name` FROM `__PREFIX__table`'
         );
 
         /**
          * Multiple calls and all columns joined.
          */
-        $qb = $this->qb->from('table')
-            ->select('id')
-            ->select([ 'first_name', 'last_name' ])
-            ->select($qb->raw('raw'));
-
-        $this->assertSame(
-            (string) $qb->getQuery(),
-            'SELECT `id`, `first_name`, `last_name`, raw FROM `table`'
+        $this->assertSamePrefixedAndNot(
+            function ($qb) {
+                return $qb->from('table')
+                    ->select('id')
+                    ->select([ 'first_name', 'table.last_name' ])
+                    ->select($qb->raw('raw_column'));
+            },
+            'SELECT `id`, `first_name`, `__PREFIX__table`.`last_name`, raw_column FROM `__PREFIX__table`'
         );
     }
 
     public function testSelectWithTableSpecified()
     {
-        $qb = $this->qb->from('table')->select('table.id');
+        $builder = function ($qb) {
+            return $qb
+                ->from('table')
+                ->select('table.id');
+        };
 
-        $this->assertSame(
-            (string) $qb->getQuery(),
-            'SELECT `table`.`id` FROM `table`'
-        );
-    }
-
-    public function testSelectTableAlias()
-    {
-        $qb = $this->qb->from('table')->select('table.id');
-
-        $this->assertSame(
-            (string) $qb->getQuery(),
-            'SELECT `table`.`id` FROM `table`'
+        $this->assertSamePrefixedAndNot(
+            $builder,
+            'SELECT `__PREFIX__table`.`id` FROM `__PREFIX__table`'
         );
     }
 
     public function testTable()
     {
-        $qb = $this->qb->select('id')->from('table')->table('asd', '123');
+        $builder = function ($qb) {
+            return $qb
+                ->select('id')
+                ->select('table.id')
+                ->select($this->qb->raw('prefixed_free.id'))
+                ->from('table')
+                ->table('asd', '123')
+                ->table($this->qb->raw('prefixed_free'));
+        };
 
-        $this->assertSame(
-            (string) $qb->getQuery(),
-            'SELECT `id` FROM `table`, `asd`, `123`'
+        $this->assertSamePrefixedAndNot(
+            $builder,
+            'SELECT `id`, `__PREFIX__table`.`id`, prefixed_free.id FROM `__PREFIX__table`, `__PREFIX__asd`, `__PREFIX__123`, prefixed_free'
         );
     }
 
     public function testWhere()
     {
-        $qb = $this->qb->table('table')
-            ->select('*')
-            ->where('col1', 1)
-            ->where('col2', '<', 2)
-            ->orWhere('col3', '!=', 3)
-            ->whereNot('col4', 4)
-            ->orWhereNot('col5', 5);
+        $builder = function ($qb) {
+            return $qb->table('table')
+                ->select('*')
+                ->where('col1', 1)
+                ->where('col2', '<', 2)
+                ->orWhere('col3', '!=', 3)
+                ->whereNot('col4', 4)
+                ->orWhereNot('col5', 5)
+                ->where($this->qb->raw('prefixed_free.col6'), 6)
+                ->where($this->qb->raw('prefixed_free.col7 = 7'))
+                ->where($this->qb->raw('prefixed_free.col8 = :val', [ ':val' => 8 ]));
+        };
 
-        $this->assertSame(
-            (string) $qb->getQuery(),
-            'SELECT * FROM `table` WHERE `col1` = 1 AND `col2` < 2 OR `col3` != 3 AND NOT `col4` = 4 OR NOT `col5` = 5'
+        $this->assertSamePrefixedAndNot(
+            $builder,
+            'SELECT * FROM `__PREFIX__table` WHERE `col1` = 1 AND `col2` < 2 OR `col3` != 3 AND NOT `col4` = 4 OR NOT `col5` = 5 AND prefixed_free.col6 = 6 AND prefixed_free.col7 = 7 AND prefixed_free.col8 = :val'
+        );
+    }
+
+    public function testNestedQuery()
+    {
+        $builder = function ($qb) {
+            $subQuery = $qb
+                ->select('name')
+                ->from('persons')
+                ->where('id', 15);
+
+            $query = $qb
+                ->select('*')
+                ->select('table.*')
+                ->from('table')
+                ->select($qb->subQuery($subQuery, 'alias1'));
+
+            return $qb
+                ->select('*')
+                ->from($qb->subQuery($query, 'alias2'));
+        };
+
+        $this->assertSamePrefixedAndNot(
+            $builder,
+            'SELECT * FROM (SELECT *, `__PREFIX__table`.*, (SELECT `name` FROM `__PREFIX__persons` WHERE `id` = 15) AS alias1 FROM `__PREFIX__table`) AS alias2'
         );
     }
 }
