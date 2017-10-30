@@ -146,9 +146,72 @@ class QueryBuilder
 
     public function query($sql, $bindings = [])
     {
-        $this->pdoStatement = $this->prepareAndExecute($sql, $bindings);
+        $eventResult = $this->dispatch('before-query', [
+            'sql'      => $sql,
+            'bindings' => $bindings
+        ]);
 
-        return $this;
+        if(is_null($eventResult) === false)
+            return $eventResult;
+
+        $pdoStatement = $this->prepare(
+            $sql,
+            $bindings
+        );
+
+        try
+        {
+            $pdoStatement->execute();
+            $result = $pdoStatement->fetchAll($this->fetchMode);
+        }
+        catch(PDOException $e)
+        {
+            throw new QueryExecutionFailException($e->getMessage().' during query "'.$sql.'"', $e->getCode(), $e);
+        }
+
+        $pdoStatement->closeCursor();
+        $pdoStatement = null;
+        $this->dispatch('after-query', [
+            'sql'      => $sql,
+            'bindings' => $bindings,
+            'result'   => $result
+        ]);
+
+        return $result;
+    }
+
+    public function exec($sql, $bindings = [])
+    {
+        $eventResult = $this->dispatch('before-exec', [
+            'sql'      => $sql,
+            'bindings' => $bindings
+        ]);
+
+        if(is_null($eventResult) === false)
+            return $eventResult;
+
+        $pdoStatement = $this->prepare(
+            $sql,
+            $bindings
+        );
+
+        try
+        {
+            $result = $pdoStatement->execute();
+        }
+        catch(PDOException $e)
+        {
+            throw new QueryExecutionFailException($e->getMessage().' during query "'.$sql.'"', $e->getCode(), $e);
+        }
+
+        $pdoStatement = null;
+        $this->dispatch('after-exec', [
+            'sql'      => $sql,
+            'bindings' => $bindings,
+            'result'   => $result
+        ]);
+
+        return $result;
     }
 
     public function raw($value, $bindings = [])
@@ -641,16 +704,7 @@ class QueryBuilder
     {
         $this->dispatch('before-query', [ 'query' => $sql ]);
 
-        $pdoStatement = $this->pdo->prepare($sql);
-
-        foreach($bindings as $key => $value)
-        {
-            $pdoStatement->bindValue(
-                is_int($key) ? $key + 1 : $key,
-                $value,
-                is_int($value) || is_bool($value) ? PDO::PARAM_INT : PDO::PARAM_STR
-            );
-        }
+        $pdoStatement = $this->prepare($sql, $bindings);
 
         try
         {
@@ -662,6 +716,22 @@ class QueryBuilder
         }
 
         $this->dispatch('after-query', [ 'query' => $sql, 'pdoStatement' => $pdoStatement ]);
+
+        return $pdoStatement;
+    }
+
+    public function prepare($sql, $bindings = [])
+    {
+        $pdoStatement = $this->pdo->prepare($sql);
+
+        foreach($bindings as $key => $value)
+        {
+            $pdoStatement->bindValue(
+                is_int($key) ? $key + 1 : $key,
+                $value,
+                is_int($value) || is_bool($value) ? PDO::PARAM_INT : PDO::PARAM_STR
+            );
+        }
 
         return $pdoStatement;
     }
