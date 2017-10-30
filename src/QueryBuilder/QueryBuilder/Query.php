@@ -30,6 +30,11 @@ class Query
         return $this->getRawSql();
     }
 
+    public function toString()
+    {
+        return $this->getRawSql();
+    }
+
     public function getSql()
     {
         return $this->sql;
