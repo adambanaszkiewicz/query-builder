@@ -470,8 +470,15 @@ class Compiler
                 }
                 elseif($segment['key'] instanceof Raw)
                 {
-                    $criteria .= $segment['joiner'].' '.$key.' ';
-                    $bindings = array_merge($bindings, $segment['key']->getBindings());
+                    if($value === null)
+                    {
+                        $criteria .= $segment['joiner'].' '.$key.' ';
+                        $bindings = array_merge($bindings, $segment['key']->getBindings());
+                    }
+                    else
+                    {
+                        $criteria .= $segment['joiner'].' '.$key.' '.$segment['operator'].' '.$value.' ';
+                    }
                 }
                 else
                 {
