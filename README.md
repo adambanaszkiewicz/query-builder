@@ -254,6 +254,17 @@ $qbf->forkQuery();
 ```
 # @todo
 
+- Where LIKE
+
+```PHP
+$qb->like('column', 'value');
+// WHERE column LIKE '%value%'
+$qb->like('column', 'value', 'left|start');
+// WHERE column LIKE '%value'
+$qb->like('column', 'value', 'right|end');
+// WHERE column LIKE 'value%'
+```
+
 - Map result set to objects.
 
 ```php
@@ -279,3 +290,5 @@ $qbf->setScopes($scopes);
 
 $qbf->from('table')->scopeName('arg1', 'arg2')->all();
 ```
+
+- Fulltext search
