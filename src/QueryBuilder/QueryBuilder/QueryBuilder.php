@@ -141,7 +141,7 @@ class QueryBuilder
 
     public function query($sql, $bindings = [])
     {
-        $eventResult = $this->dispatch('before-query', [
+        $eventResult = $this->dispatch('before-raw-query', [
             'sql'      => $sql,
             'bindings' => $bindings
         ]);
@@ -166,7 +166,7 @@ class QueryBuilder
 
         $pdoStatement->closeCursor();
         $pdoStatement = null;
-        $this->dispatch('after-query', [
+        $this->dispatch('after-raw-query', [
             'sql'      => $sql,
             'bindings' => $bindings,
             'result'   => $result
@@ -233,25 +233,39 @@ class QueryBuilder
 
     public function all()
     {
-        $eventResult = $this->dispatch('before-select');
+        $query    = $this->getQuery('select');
+        $sql      = $query->getSql();
+        $bindings = $query->getBindings();
+
+        $eventResult = $this->dispatch('before-select', [
+            'query'    => $sql,
+            'bindings' => $bindings
+        ]);
 
         if(is_null($eventResult) === false)
             return $eventResult;
 
-        if(is_null($this->pdoStatement))
-        {
-            $query = $this->getQuery('select');
+        $this->dispatch('before-query', [
+            'type'     => 'select',
+            'query'    => $sql,
+            'bindings' => $bindings
+        ]);
 
-            $this->pdoStatement = $this->prepareAndExecute(
-                $query->getSql(),
-                $query->getBindings()
-            );
-        }
+        $result = $this->prepareAndExecute($sql, $bindings)
+            ->fetchAll($this->fetchMode);
 
-        $result = $this->pdoStatement->fetchAll($this->fetchMode);
+        $this->dispatch('after-query', [
+            'type'     => 'select',
+            'query'    => $sql,
+            'bindings' => $bindings,
+            'result'   => $result->rowCount()
+        ]);
 
-        $this->pdoStatement = null;
-        $this->dispatch('after-select', [ 'result' => $result ]);
+        $this->dispatch('after-select', [
+            'query'    => $sql,
+            'bindings' => $bindings,
+            'result'   => $result
+        ]);
 
         return $result;
     }
@@ -404,21 +418,47 @@ class QueryBuilder
 
     public function update($data, $table = null)
     {
-        $eventResult = $this->dispatch('before-update');
+        if($table)
+            $this->table($table);
+
+        $query    = $this->getQuery('update', $data);
+        $sql      = $query->getSql();
+        $bindings = $query->getBindings();
+
+        $eventResult = $this->dispatch('before-update', [
+            'query'    => $sql,
+            'bindings' => $bindings,
+            'data'     => $data
+        ]);
 
         if(is_null($eventResult) === false)
             return $eventResult;
 
-        if($table)
-            $this->table($table);
+        $this->dispatch('before-query', [
+            'type'     => 'update',
+            'query'    => $sql,
+            'bindings' => $bindings,
+            'data'     => $data
+        ]);
 
-        $query = $this->getQuery('update', $data);
+        $result = $this->prepareAndExecute($sql, $bindings);
 
-        $response = $this->prepareAndExecute($query->getSql(), $query->getBindings());
+        $this->dispatch('after-query', [
+            'type'     => 'update',
+            'query'    => $sql,
+            'bindings' => $bindings,
+            'data'     => $data,
+            'result'   => $result->rowCount()
+        ]);
 
-        $this->dispatch('after-update', [ 'query' => $query ]);
+        $this->dispatch('after-update', [
+            'query'    => $sql,
+            'bindings' => $bindings,
+            'data'     => $data,
+            'result'   => $result->rowCount()
+        ]);
 
-        return $response;
+        return $result->rowCount();
     }
 
     public function updateOrInsert($data, $table = null)
@@ -438,21 +478,43 @@ class QueryBuilder
 
     public function delete($table = null)
     {
-        $eventResult = $this->dispatch('before-delete');
+        if($table)
+            $this->table($table);
+
+        $query    = $this->getQuery('delete');
+        $sql      = $query->getSql();
+        $bindings = $query->getBindings();
+
+        $eventResult = $this->dispatch('before-delete', [
+            'query'    => $sql,
+            'bindings' => $bindings,
+        ]);
 
         if(is_null($eventResult) === false)
             return $eventResult;
 
-        if($table)
-            $this->table($table);
+        $this->dispatch('before-query', [
+            'type'     => 'delete',
+            'query'    => $sql,
+            'bindings' => $bindings,
+        ]);
 
-        $query = $this->getQuery('delete');
+        $result = $this->prepareAndExecute($sql, $bindings);
 
-        $response = $this->prepareAndExecute($query->getSql(), $query->getBindings());
+        $this->dispatch('after-query', [
+            'type'     => 'delete',
+            'query'    => $sql,
+            'bindings' => $bindings,
+            'result'   => $result->rowCount()
+        ]);
 
-        $this->dispatch('after-delete', [ 'query' => $query ]);
+        $this->dispatch('after-delete', [
+            'query'    => $sql,
+            'bindings' => $bindings,
+            'result'   => $result->rowCount()
+        ]);
 
-        return $response;
+        return $result->rowCount();
     }
 
     public function groupBy($field)
@@ -724,20 +786,16 @@ class QueryBuilder
 
     public function prepareAndExecute($sql, $bindings = [])
     {
-        $this->dispatch('before-query', [ 'query' => $sql ]);
-
         $pdoStatement = $this->prepare($sql, $bindings);
 
         try
         {
-            $pdoStatement->execute();
+            $pdoStatement->execute($bindings);
         }
         catch(PDOException $e)
         {
             throw new QueryExecutionFailException($e->getMessage().' during query "'.$sql.'"', $e->getCode(), $e);
         }
-
-        $this->dispatch('after-query', [ 'query' => $sql, 'pdoStatement' => $pdoStatement ]);
 
         return $pdoStatement;
     }
@@ -835,16 +893,43 @@ class QueryBuilder
 
     protected function doInsert($data, $type)
     {
-        $eventResult = $this->dispatch('before-insert');
+        $query    = $this->getQuery($type, $data);
+        $sql      = $query->getSql();
+        $bindings = $query->getBindings();
+
+        $eventResult = $this->dispatch('before-insert', [
+            'query'    => $sql,
+            'bindings' => $bindings,
+            'data'     => $data
+        ]);
 
         if(is_null($eventResult) === false)
             return $eventResult;
 
-        $query  = $this->getQuery($type, $data);
-        $result = $this->prepareAndExecute($query->getSql(), $query->getBindings());
+        $this->dispatch('before-query', [
+            'type'     => 'insert',
+            'query'    => $sql,
+            'bindings' => $bindings,
+            'data'     => $data
+        ]);
+
+        $result = $this->prepareAndExecute($sql, $bindings);
         $return = $result->rowCount() === 1 ? $this->pdo->lastInsertId() : null;
 
-        $this->dispatch('after-insert', [ 'result' => $return ]);
+        $this->dispatch('after-query', [
+            'type'     => 'insert',
+            'query'    => $sql,
+            'bindings' => $bindings,
+            'data'     => $data,
+            'result'   => $result->rowCount()
+        ]);
+
+        $this->dispatch('after-insert', [
+            'query'    => $sql,
+            'bindings' => $bindings,
+            'data'     => $data,
+            'result'   => $result->rowCount()
+        ]);
 
         return $return;
     }
