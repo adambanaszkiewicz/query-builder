@@ -147,17 +147,16 @@ class Compiler
             }
             else
             {
-                $values[]   = '?';
-                $bindings[] = $value;
-            }
-        }
+                $values[] = ':'.$key;
+                $bindings[':'.$key] = $value;
+            }        }
 
         $segmentsToBuild = [
             $type.' INTO',
             $this->quoteTable($table),
-            '('.$this->arrayToString($keys, ',', 'column').')',
+            '('.$this->arrayToString($keys, ', ', 'column').')',
             'VALUES',
-            '('.$this->arrayToString($values, ',', 'value').')',
+            '('.$this->arrayToString($values, ', ', null).')',
         ];
 
         if(isset($querySegments['onduplicate']))
@@ -371,7 +370,7 @@ class Compiler
             }
             else
             {
-                $segment .= $this->quoteColumnName($key).' = ? , ';
+                $segment .= $this->quoteColumnName($key).' = '.$key.' , ';
                 $bindings[] = $value;
             }
         }
