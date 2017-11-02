@@ -12,5 +12,17 @@ use Symfony\Component\EventDispatcher\GenericEvent;
 
 class SymfonyEvent extends GenericEvent
 {
-    
+    protected $result;
+
+    public function setResult($result)
+    {
+        $this->result = $result;
+
+        return $this;
+    }
+
+    public function getResult()
+    {
+        return $this->result;
+    }
 }
