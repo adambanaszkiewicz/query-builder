@@ -12,15 +12,11 @@ class Transaction extends QueryBuilder
 {
     public function commit()
     {
-        $this->pdo->commit();
-
-        throw new TransactionHaltException();
+        $this->commitTransaction();
     }
 
     public function rollback()
     {
-        $this->pdo->rollBack();
-
-        throw new TransactionHaltException();
+        $this->rollbackTransaction();
     }
 }

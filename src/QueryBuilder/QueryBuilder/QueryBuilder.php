@@ -126,11 +126,6 @@ class QueryBuilder
         return $this->eventDispatcher->dispatch($event, $params);
     }
 
-    public function asObject($className, $classConstructorArgs = [])
-    {
-        return $this->setFetchMode(PDO::FETCH_CLASS, $className, $classConstructorArgs);
-    }
-
     public function newQuery(Connection $connection = null)
     {
         if(is_null($connection))
@@ -261,6 +256,11 @@ class QueryBuilder
         return $result;
     }
 
+    public function allAsObjects($className, $classConstructorArgs = [])
+    {
+        return $this->setFetchMode(PDO::FETCH_CLASS, $className, $classConstructorArgs)->all();
+    }
+
     public function first()
     {
         $this->limit(1);
@@ -268,6 +268,11 @@ class QueryBuilder
         $result = $this->all();
 
         return ! $result ? null : $result[0];
+    }
+
+    public function firstAsObject($className, $classConstructorArgs = [])
+    {
+        return $this->setFetchMode(PDO::FETCH_CLASS, $className, $classConstructorArgs)->first();
     }
 
     public function find($value, $field = 'id')
@@ -675,22 +680,39 @@ class QueryBuilder
         return $this;
     }
 
+    public function beginTransaction()
+    {
+        $this->pdo->beginTransaction();
+
+        return new Transaction($this->connection, $this->eventDispatcher);
+    }
+
+    public function rollbackTransaction()
+    {
+        $this->pdo->rollback();
+
+        return $this;
+    }
+
+    public function commitTransaction()
+    {
+        $this->pdo->commit();
+
+        return $this;
+    }
+
     public function transaction(\Closure $callback)
     {
         try
         {
             $this->pdo->beginTransaction();
 
-            $transaction = new Transaction($this->connection);
+            $transaction = new Transaction($this->connection, $this->eventDispatcher);
 
             $callback($transaction);
 
             $this->pdo->commit();
 
-            return $this;
-        }
-        catch(TransactionHaltException $e)
-        {
             return $this;
         }
         catch(\Exception $e)
