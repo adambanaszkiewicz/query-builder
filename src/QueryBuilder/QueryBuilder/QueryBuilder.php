@@ -272,7 +272,9 @@ class QueryBuilder
 
     public function allAsObjects($className, $classConstructorArgs = [])
     {
-        return $this->setFetchMode(PDO::FETCH_CLASS, $className, $classConstructorArgs)->all();
+        return $this->asObjects(function () {
+            return $this->all();
+        }, $className, $classConstructorArgs);
     }
 
     public function first()
@@ -286,7 +288,18 @@ class QueryBuilder
 
     public function firstAsObject($className, $classConstructorArgs = [])
     {
-        return $this->setFetchMode(PDO::FETCH_CLASS, $className, $classConstructorArgs)->first();
+        return $this->asObjects(function () {
+            return $this->first();
+        }, $className, $classConstructorArgs);
+    }
+
+    private function asObjects(Closure $callback, $className, $classConstructorArgs)
+    {
+        $fetchMode = $this->fetchMode;
+        $this->setFetchMode(PDO::FETCH_CLASS, $className, $classConstructorArgs);
+        $result = $callback();
+        call_user_method_array('setFetchMode', $this, $fetchMode);
+        return $result;
     }
 
     public function find($value, $field = 'id')
