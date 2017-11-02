@@ -891,6 +891,11 @@ class QueryBuilder
         return $this;
     }
 
+    public function getLastId()
+    {
+        return $this->pdo->lastInsertId();
+    }
+
     protected function doInsert($data, $type)
     {
         $query    = $this->getQuery($type, $data);
@@ -914,7 +919,7 @@ class QueryBuilder
         ]);
 
         $result = $this->prepareAndExecute($sql, $bindings);
-        $return = $result->rowCount() === 1 ? $this->pdo->lastInsertId() : null;
+        $return = $result->rowCount() === 1 ? $this->getLastId() : null;
 
         $this->dispatch('after-query', [
             'type'     => 'insert',
