@@ -32,9 +32,12 @@ $result = $qbf->from('table')->where('cost', '>', 120)->all();
 ### Table selection
 ```php
 // Set table to operate on.
-$qbf->table($tableName);
+$qbf->table('table');
+$qbf->table('table', 'next-table');
+$qbf->table('table', 'next-table', 'and-another');
+$qbf->table([ 'table', 'next-table', 'and-another' ]);
 // Alias to table() method.
-$qbf->from($tableName);
+$qbf->from(...);
 ```
 
 ### Selects
@@ -129,6 +132,13 @@ $qbf->from('table')->insertIgnore([ 'name' => 'Adam' ]);
 $qbf->insertIgnore([ 'name' => 'Adam' ], 'table');
 $qbf->from('table')->replace([ 'id' => 12, 'name' => 'Adam' ]);
 $qbf->replace([ 'id' => 12, 'name' => 'Adam' ], 'table');
+```
+
+If insert call operate on table with AUTO_INCREMENT column, method will return inserted ID of row. Also You can use another method (after call `insert()` method) to do the same thing:
+
+```php
+$qbf->getLastId();
+
 ```
 
 ### Update
@@ -265,13 +275,17 @@ $qb->like('column', 'value', 'right|end');
 // WHERE column LIKE 'value%'
 ```
 
-- Map result set to objects.
+
+
+- Inserting data as aggregated collection
 
 ```php
-// All records to objects array
-$objects = $qb->from('table')->allAsObjects(Some\Class\Name);
-// First record as object
-$objects = $qb->from('table')->firstAsObject(Some\Class\Name);
+$qb->insert([
+    [ 'id' => 1, 'col' => 'val' ],
+    [ 'id' => 1, 'col' => 'val' ],
+    [ 'id' => 1, 'col' => 'val' ],
+    [ 'id' => 1, 'col' => 'val' ]
+], true, 'table');
 ```
 
 - Scopes - reusable predefined groups of statements.
