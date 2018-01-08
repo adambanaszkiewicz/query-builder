@@ -277,17 +277,6 @@ $qb->like('column', 'value', 'right|end');
 
 
 
-- Inserting data as aggregated collection
-
-```php
-$qb->insert([
-    [ 'id' => 1, 'col' => 'val' ],
-    [ 'id' => 1, 'col' => 'val' ],
-    [ 'id' => 1, 'col' => 'val' ],
-    [ 'id' => 1, 'col' => 'val' ]
-], true, 'table');
-```
-
 - Scopes - reusable predefined groups of statements.
 ```php
 $scopes = new ScopesContainer;
@@ -303,6 +292,28 @@ $qbf->setScopes($scopes);
 // ...
 
 $qbf->from('table')->scopeName('arg1', 'arg2')->all();
+```
+
+- Chunks of returned rows
+Must work only when there's no defined LIMIT statement!
+```php
+$qb->where('column', 1)->chunk(30, function (array $chunk) {
+    foreach($chunk as $row)
+    {
+        // Do something with $row...
+    }
+});
+```
+
+- Inserting data as aggregated collection
+
+```php
+$qb->insert([
+    [ 'id' => 1, 'col' => 'val' ],
+    [ 'id' => 1, 'col' => 'val' ],
+    [ 'id' => 1, 'col' => 'val' ],
+    [ 'id' => 1, 'col' => 'val' ]
+], true, 'table');
 ```
 
 - Fulltext search
