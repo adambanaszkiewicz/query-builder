@@ -9,7 +9,7 @@
 namespace Requtize\QueryBuilder\QueryBuilder;
 
 use Requtize\QueryBuilder\Connection;
-use Requtize\QueryBuilder\Exception;
+use Requtize\QueryBuilder\Exception\Exception;
 use Requtize\QueryBuilder\QueryBuilder\Raw;
 use Requtize\QueryBuilder\QueryBuilder\NestedCriteria;
 use Requtize\QueryBuilder\Event\EventDispatcherInterface;
