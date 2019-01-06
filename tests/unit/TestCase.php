@@ -10,16 +10,16 @@ use Requtize\QueryBuilder\ConnectionAdapters\PdoBridge;
 class TestCase extends \PHPUnit_Framework_TestCase
 {
     protected $pdo;
-    protected $qb;
-    protected $qbPrefixed;
+    protected $qbf;
+    protected $qbfPrefixed;
 
     public function setUp()
     {
         $this->pdo = $this->createPDO();
 
-        $this->qb = $this->createQueryBuilder($this->createConnection($this->pdo));
+        $this->qbf = $this->createQueryBuilder($this->createConnection($this->pdo));
 
-        $this->qbPrefixed = $this->createQueryBuilder($this->createConnection($this->pdo, [
+        $this->qbfPrefixed = $this->createQueryBuilder($this->createConnection($this->pdo, [
             'prefix' => 'prefix_'
         ]));
     }
@@ -47,12 +47,12 @@ class TestCase extends \PHPUnit_Framework_TestCase
     public function assertSamePrefixedAndNot(\Closure $builder, $query)
     {
         $this->assertSame(
-            (string) $builder($this->qb)->getQuery(),
+            (string) $builder($this->qbf)->getQuery(),
             str_replace('__PREFIX__', '', $query)
         );
 
         $this->assertSame(
-            (string) $builder($this->qbPrefixed)->getQuery(),
+            (string) $builder($this->qbfPrefixed)->getQuery(),
             str_replace('__PREFIX__', 'prefix_', $query)
         );
     }
