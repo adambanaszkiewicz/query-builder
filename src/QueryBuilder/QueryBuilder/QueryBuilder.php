@@ -256,14 +256,14 @@ class QueryBuilder
             'bindings' => $bindings
         ]);
 
-        $result = $this->prepareAndExecute($sql, $bindings)
-            ->fetchAll($this->fetchMode);
+        $pdoStatement = $this->prepareAndExecute($sql, $bindings);
+        $result = call_user_func_array([ $pdoStatement, 'fetchAll' ], $this->fetchMode);
 
         $this->dispatch('after-query', [
             'type'     => 'select',
             'query'    => $sql,
             'bindings' => $bindings,
-            'result'   => $result->rowCount()
+            'result'   => is_array($result) ? count($result) : $result->rowCount()
         ]);
 
         $this->dispatch('after-select', [
@@ -298,12 +298,12 @@ class QueryBuilder
         }, $className, $classConstructorArgs);
     }
 
-    private function asObjects(Closure $callback, $className, $classConstructorArgs)
+    private function asObjects(\Closure $callback, $className, $classConstructorArgs)
     {
         $fetchMode = $this->fetchMode;
         $this->setFetchMode(PDO::FETCH_CLASS, $className, $classConstructorArgs);
         $result = $callback();
-        call_user_method_array('setFetchMode', $this, $fetchMode);
+        call_user_func_array([ $this, 'setFetchMode' ], $fetchMode);
         return $result;
     }
 

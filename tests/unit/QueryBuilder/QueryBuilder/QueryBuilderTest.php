@@ -203,6 +203,25 @@ class QueryBuilderTest extends TestCase
         $this->assertSame('object', gettype($result[0]));
         $this->assertSame(TableRow::class, get_class($result[0]));
     }
+
+    public function testQueryAsObjects()
+    {
+        $qb = $this->qbf->create();
+
+        $result = $qb->select($qb->raw('1 as id, \'value\' as value'))->firstAsObject(TableRow::class);
+
+        $this->assertSame('object', gettype($result));
+        $this->assertSame(TableRow::class, get_class($result));
+        $this->assertSame('1', $result->getId());
+        $this->assertSame('value', $result->getValue());
+
+        $result = $qb->select($qb->raw('1 as id, \'value\' as value'))->allAsObjects(TableRow::class);
+
+        $this->assertSame('object', gettype($result[0]));
+        $this->assertSame(TableRow::class, get_class($result[0]));
+        $this->assertSame('1', $result[0]->getId());
+        $this->assertSame('value', $result[0]->getValue());
+    }
 }
 
 class TableRow
