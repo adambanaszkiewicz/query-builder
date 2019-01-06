@@ -80,17 +80,27 @@ class Compiler
 
         $segmentsToBuild = [
             'SELECT'.(isset($querySegments['distinct']) ? ' DISTINCT' : ''),
-            $this->arrayToString($querySegments['selects'], ', ', 'column'),
-            'FROM',
-            $this->arrayToString($querySegments['tables'], ', ', 'table'),
-            $this->compileJoin($querySegments),
-            $wheres,
-            $groupBy,
-            $havings,
-            $orderBy,
-            isset($querySegments['limit'])  ? 'LIMIT '.$querySegments['limit']   : '',
-            isset($querySegments['offset']) ? 'OFFSET '.$querySegments['offset'] : ''
+            $this->arrayToString($querySegments['selects'], ', ', 'column')
         ];
+
+        if(isset($querySegments['tables']))
+        {
+            $tables = $this->arrayToString($querySegments['tables'], ', ', 'table');
+
+            if($tables)
+            {
+                $segmentsToBuild[] = 'FROM';
+                $segmentsToBuild[] = $tables;
+            }
+        }
+
+        $segmentsToBuild[] = $this->compileJoin($querySegments);
+        $segmentsToBuild[] = $wheres;
+        $segmentsToBuild[] = $groupBy;
+        $segmentsToBuild[] = $havings;
+        $segmentsToBuild[] = $orderBy;
+        $segmentsToBuild[] = isset($querySegments['limit'])  ? 'LIMIT '.$querySegments['limit']   : '';
+        $segmentsToBuild[] = isset($querySegments['offset']) ? 'OFFSET '.$querySegments['offset'] : '';
 
         return [
             'sql'      => $this->buildQuerySegment($segmentsToBuild),
