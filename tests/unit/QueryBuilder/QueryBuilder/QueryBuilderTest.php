@@ -164,4 +164,59 @@ class QueryBuilderTest extends TestCase
             'SELECT * FROM (SELECT *, `__PREFIX__table`.*, (SELECT `name` FROM `__PREFIX__persons` WHERE `id` = 15) AS alias1 FROM `__PREFIX__table`) AS alias2'
         );
     }
+
+    public function testQueryFetchMode()
+    {
+        $qb = $this->qbf->create();
+
+        /**
+         * Default fetch mode is an object.
+         */
+        $result = $qb->query('SELECT 1');
+
+        $this->assertSame(1, count($result));
+        $this->assertTrue(isset($result[0]));
+        $this->assertSame('object', gettype($result[0]));
+        $this->assertSame('stdClass', get_class($result[0]));
+
+        /**
+         * Change to ASSOC fetch mode.
+         */
+        $qb->setFetchMode(PDO::FETCH_ASSOC);
+
+        $result = $qb->query('SELECT 1');
+
+        $this->assertSame(1, count($result));
+        $this->assertTrue(isset($result[0]));
+        $this->assertSame('array', gettype($result[0]));
+
+        /**
+         * Change to object fetch mode with defined custom class name.
+         */
+        $qb->setFetchMode(PDO::FETCH_CLASS, TableRow::class);
+
+        $result = $qb->query('SELECT 1 as id, \'value\' as value');
+
+        $this->assertSame(1, count($result));
+        $this->assertSame('1', $result[0]->getId());
+        $this->assertSame('value', $result[0]->getValue());
+        $this->assertSame('object', gettype($result[0]));
+        $this->assertSame(TableRow::class, get_class($result[0]));
+    }
+}
+
+class TableRow
+{
+    protected $id;
+    protected $value;
+
+    public function getId()
+    {
+        return $this->id;
+    }
+
+    public function getValue()
+    {
+        return $this->value;
+    }
 }

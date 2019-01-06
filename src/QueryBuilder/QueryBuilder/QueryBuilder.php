@@ -162,7 +162,7 @@ class QueryBuilder
         try
         {
             $pdoStatement->execute();
-            $result = $pdoStatement->fetchAll($this->fetchMode);
+            $result = call_user_func_array([ $pdoStatement, 'fetchAll' ], $this->fetchMode);
         }
         catch(PDOException $e)
         {
