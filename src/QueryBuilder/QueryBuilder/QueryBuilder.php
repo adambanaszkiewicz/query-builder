@@ -98,6 +98,11 @@ class QueryBuilder
         return $this;
     }
 
+    public function getFetchMode()
+    {
+        return $this->fetchMode;
+    }
+
     public function setConnection(Connection $connection)
     {
         $this->connection = $connection;
