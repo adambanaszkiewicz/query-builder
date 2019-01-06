@@ -53,8 +53,6 @@ class Compiler
 
     public function select($querySegments, array $data)
     {
-        if(isset($querySegments['tables']) === false)
-            throw new Exception('No table given.');
         if(isset($querySegments['selects']) === false)
             $querySegments['selects'][] = '*';
 
@@ -403,7 +401,14 @@ class Compiler
         $string = '';
 
         foreach($data as $val)
-            $string = trim($string).' '.trim($val);
+        {
+            $value = trim($val);
+
+            if($value)
+            {
+                $string = trim($string).' '.$value;
+            }
+        }
 
         return $string;
     }
