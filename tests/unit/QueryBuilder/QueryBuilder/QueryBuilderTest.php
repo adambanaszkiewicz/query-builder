@@ -107,10 +107,10 @@ class QueryBuilderTest extends TestCase
             return $qb
                 ->select('id')
                 ->select('table.id')
-                ->select($this->qb->raw('prefixed_free.id'))
+                ->select($qb->raw('prefixed_free.id'))
                 ->from('table')
                 ->table('asd', '123')
-                ->table($this->qb->raw('prefixed_free'));
+                ->table($qb->raw('prefixed_free'));
         };
 
         $this->assertSamePrefixedAndNot(
@@ -129,9 +129,9 @@ class QueryBuilderTest extends TestCase
                 ->orWhere('col3', '!=', 3)
                 ->whereNot('col4', 4)
                 ->orWhereNot('col5', 5)
-                ->where($this->qb->raw('prefixed_free.col6'), 6)
-                ->where($this->qb->raw('prefixed_free.col7 = 7'))
-                ->where($this->qb->raw('prefixed_free.col8 = :val', [ ':val' => 8 ]));
+                ->where($qb->raw('prefixed_free.col6'), 6)
+                ->where($qb->raw('prefixed_free.col7 = 7'))
+                ->where($qb->raw('prefixed_free.col8 = :val', [ ':val' => 8 ]));
         };
 
         $this->assertSamePrefixedAndNot(
