@@ -63,17 +63,14 @@ class Compiler
         else
             $groupBy = '';
 
+        $orderBy = '';
         if(isset($querySegments['orderBy']) && is_array($querySegments['orderBy']))
         {
-            foreach($querySegments['orderBy'] as $orderBy)
-                $orderBy .= $this->quoteTable($orderBy['field']).' '.$orderBy['type'].', ';
+            foreach($querySegments['orderBy'] as $order)
+                $orderBy .= $this->quoteTable($order['field']).' '.$order['type'].', ';
 
             if($orderBy = trim($orderBy, ', '))
                 $orderBy = 'ORDER BY '.$orderBy;
-        }
-        else
-        {
-            $orderBy = '';
         }
 
         list($havings, $havingBindings) = $this->buildCriteriaOfType($querySegments, 'havings', 'HAVING');
